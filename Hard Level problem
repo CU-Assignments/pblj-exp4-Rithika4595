@@ -1,0 +1,60 @@
+import java.util.*;
+
+class TicketBookingSystem {
+    private static final int TOTAL_SEATS = 10;
+    private static final boolean[] seats = new boolean[TOTAL_SEATS];
+    private static final Object lock = new Object();
+
+    public static void bookSeat(int seatNumber, String customer) {
+        synchronized (lock) {
+            if (seatNumber < 0 || seatNumber >= TOTAL_SEATS) {
+                System.out.println(customer + " - Invalid seat number.");
+                return;
+            }
+            if (!seats[seatNumber]) {
+                seats[seatNumber] = true;
+                System.out.println(customer + " successfully booked seat " + seatNumber);
+            } else {
+                System.out.println(customer + " - Seat " + seatNumber + " is already booked.");
+            }
+        }
+    }
+}
+
+class BookingThread extends Thread {
+    private final int seatNumber;
+    private final String customer;
+
+    public BookingThread(int seatNumber, String customer, int priority) {
+        this.seatNumber = seatNumber;
+        this.customer = customer;
+        setPriority(priority);
+    }
+
+    @Override
+    public void run() {
+        TicketBookingSystem.bookSeat(seatNumber, customer);
+    }
+}
+
+public class TicketBookingMain {
+    public static void main(String[] args) {
+        List<BookingThread> threads = new ArrayList<>();
+        threads.add(new BookingThread(2, "VIP John", Thread.MAX_PRIORITY));
+        threads.add(new BookingThread(2, "Regular Alice", Thread.NORM_PRIORITY));
+        threads.add(new BookingThread(3, "VIP Bob", Thread.MAX_PRIORITY));
+        threads.add(new BookingThread(3, "Regular Charlie", Thread.NORM_PRIORITY));
+
+        for (BookingThread thread : threads) {
+            thread.start();
+        }
+        
+        for (BookingThread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
